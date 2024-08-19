@@ -10,15 +10,18 @@ from django.core.files.storage import default_storage
 
 from massage.frontEnd.models import Document
 from massage.frontEnd.forms import DocumentForm
-from pymei import XmlImport, XmlExport
+# from pymei import XmlImport, XmlExport
+from pymei import documentFromFile, documentToFile
 
 
 def list(request):
     def process(request):
         def write_transformation(file_path, data=TransformData()):
-            old_MEI_doc = XmlImport.documentFromFile(file_path)
+            old_res = documentFromFile(file_path)
+            old_MEI_doc = old_res.getMeiDocument()
+
             new_MEI_doc = transform_mei(old_MEI_doc, data)
-            XmlExport.meiDocumentToFile(new_MEI_doc, file_path)
+            status = documentToFile(new_MEI_doc, file_path)
 
         if request.method == 'POST':
             MEI_filename = request.POST.get('MEI_filename')
@@ -26,6 +29,7 @@ def list(request):
             obliterate_incipit = request.POST.get('obliterate_incipit')
             replace_longa = request.POST.get('replace_longa')
             editorial_resp = str(request.POST.get('editorial_resp'))
+            color_for_ficta = str(request.POST.get('color_for_ficta'))
             alternates_list = []
             # To calculate number of staves
             sn = 0
@@ -43,7 +47,9 @@ def list(request):
                     obliterate_incipit=obliterate_incipit,
                     replace_longa=replace_longa,
                     editorial_resp=editorial_resp,
-                    alternates_list=alternates_list)
+                    alternates_list=alternates_list,
+                    color_for_ficta=color_for_ficta,
+                )
             write_transformation(str(MEI_filename), MEI_instructions)
 
     # Handle file upload
